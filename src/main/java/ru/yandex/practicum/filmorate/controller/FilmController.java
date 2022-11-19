@@ -9,10 +9,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 
 import javax.validation.Valid;
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @RestController
@@ -69,7 +66,7 @@ public class FilmController extends BaseController {
             return 1;
         }
 
-        List<Integer> filmIdList = films.keySet().stream().toList();
+        List<Integer> filmIdList = new ArrayList<>(films.keySet());
 
         return filmIdList.get(filmIdList.size() - 1) + 1;
     }
