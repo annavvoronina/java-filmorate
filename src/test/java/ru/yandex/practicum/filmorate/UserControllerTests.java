@@ -52,7 +52,7 @@ class UserControllerTests {
                                         "\"birthday\": \"2446-08-20\"" +
                                         "}")
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -68,7 +68,7 @@ class UserControllerTests {
                                         "\"birthday\": \"2446-08-20\"" +
                                         "}")
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -103,7 +103,7 @@ class UserControllerTests {
                                         "\"birthday\": \"2446-08-20\"" +
                                         "}")
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 
 }

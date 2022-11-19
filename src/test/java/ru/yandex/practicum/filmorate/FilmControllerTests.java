@@ -54,7 +54,7 @@ class FilmControllerTests {
                                         "\"duration\": 200" +
                                         "}")
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -70,7 +70,7 @@ class FilmControllerTests {
                                         "\"duration\": 200" +
                                         "}")
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -86,7 +86,7 @@ class FilmControllerTests {
                                         "\"duration\": 200" +
                                         "}")
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -102,7 +102,7 @@ class FilmControllerTests {
                                         "\"duration\": -200" +
                                         "}")
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 
 

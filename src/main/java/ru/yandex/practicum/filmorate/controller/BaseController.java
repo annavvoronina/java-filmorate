@@ -11,7 +11,7 @@ public class BaseController {
     @ExceptionHandler({ ValidationException.class })
     protected ResponseEntity<RuntimeException> handleException(RuntimeException exception) {
         exception.setStackTrace(new StackTraceElement[0]);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exception);
     }
 
 }
