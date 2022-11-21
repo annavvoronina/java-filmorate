@@ -59,7 +59,6 @@ public class FilmController {
 
     private Integer getNewFilmId() {
         if (films.keySet().isEmpty()) {
-
             return 1;
         }
 

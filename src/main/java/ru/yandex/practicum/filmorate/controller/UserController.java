@@ -59,7 +59,6 @@ public class UserController {
 
     private Integer getNewUserId() {
         if (users.keySet().isEmpty()) {
-
             return 1;
         }
 

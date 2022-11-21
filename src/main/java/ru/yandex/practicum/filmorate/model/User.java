@@ -9,12 +9,12 @@ public class User {
 
     private int id;
 
-    private final String email;
+    private String email;
 
-    private final String login;
+    private String login;
 
     private String name;
 
-    private final LocalDate birthday;
+    private LocalDate birthday;
 
 }
