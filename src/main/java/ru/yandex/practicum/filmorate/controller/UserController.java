@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -14,7 +15,7 @@ import java.util.*;
 @Slf4j
 @RestController
 @RequestMapping("/users")
-public class UserController extends BaseController {
+public class UserController {
 
     private final Map<Integer, User> users = new HashMap<>();
 
@@ -29,12 +30,6 @@ public class UserController extends BaseController {
     public User create(@Valid @RequestBody User user) {
         validate(user);
         log.info("Валидация пройдена");
-
-        if (!checkUniqueness(user)) {
-            log.warn(user.getLogin() + " уже существует");
-
-            throw new ValidationException("Пользователь уже есть в системе, проверьте login и e-mail");
-        }
 
         Integer newUserId = getNewUserId();
         user.setId(newUserId);
@@ -58,14 +53,13 @@ public class UserController extends BaseController {
 
             return user;
         }
-
         log.warn(user.getName() + " не найден");
-
         throw new ValidationException("Нет такого пользователя");
     }
 
     private Integer getNewUserId() {
         if (users.keySet().isEmpty()) {
+
             return 1;
         }
 
@@ -74,32 +68,38 @@ public class UserController extends BaseController {
         return userIdList.get(userIdList.size() - 1) + 1;
     }
 
-    public static void validate(@Valid @RequestBody User user) {
-        if (!user.getEmail().contains("@")) {
+    private void validate(User user) {
+        if (user.getEmail() == null || !user.getEmail().contains("@")) {
             log.warn("Пользователь не внесен, некорректный e-mail");
             throw new ValidationException("Введен некорректный e-mail");
         }
-        if (user.getLogin().isEmpty() || user.getLogin().contains(" ")) {
+        if (StringUtils.isBlank(user.getLogin()) || user.getLogin().contains(" ")) {
             log.warn("Пользователь не внесен, логин пустой или содержит пробелы");
             throw new ValidationException("Логин не может быть пустым и содержать пробелы");
         }
         if (user.getName() == null) {
             user.setName(user.getLogin());
         }
-        if (user.getBirthday().isAfter(LocalDate.now())) {
+        if (user.getBirthday() == null || user.getBirthday().isAfter(LocalDate.now())) {
             log.warn("Пользователь не внесен, некорректная дата рождения");
-            throw new ValidationException("Дата рождения не может быть в будущем");
+            throw new ValidationException("Дата рождения внесена некорректно");
+        }
+        if (!checkUniqueness(user)) {
+            log.warn("Пользователь не внесен, уже есть в системе");
+            throw new ValidationException("Пользователь уже есть в системе, проверьте login и e-mail");
         }
     }
 
-    public boolean checkUniqueness(User newUser) {
+    private boolean checkUniqueness(User newUser) {
         for (User user : users.values()) {
-            if (user.getLogin().equals(newUser.getLogin()) || user.getEmail().equals(newUser.getEmail())) {
+            if (!Objects.equals(user.getLogin(), newUser.getLogin()) &&
+                    (Objects.equals(user.getLogin(), newUser.getLogin()) ||
+                    Objects.equals(user.getEmail(), newUser.getEmail()))) {
+
                 return false;
             }
         }
 
         return true;
     }
-
 }

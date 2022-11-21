@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -14,7 +15,7 @@ import java.util.*;
 @Slf4j
 @RestController
 @RequestMapping("/films")
-public class FilmController extends BaseController {
+public class FilmController {
 
     private final Map<Integer, Film> films = new HashMap<>();
 
@@ -29,11 +30,6 @@ public class FilmController extends BaseController {
     public Film create(@Valid @RequestBody Film film) {
         validate(film);
         log.info("Валидация пройдена");
-
-        if (!checkUniqueness(film)) {
-            log.warn(film.getName() + " уже существует");
-            throw new ValidationException("Фильм уже есть в системе");
-        }
 
         Integer newFilmId = getNewFilmId();
         film.setId(newFilmId);
@@ -63,6 +59,7 @@ public class FilmController extends BaseController {
 
     private Integer getNewFilmId() {
         if (films.keySet().isEmpty()) {
+
             return 1;
         }
 
@@ -71,16 +68,16 @@ public class FilmController extends BaseController {
         return filmIdList.get(filmIdList.size() - 1) + 1;
     }
 
-    private static void validate(@Valid @RequestBody Film film) {
-        if (film.getName() == null || film.getName().isEmpty()) {
+    private void validate(Film film) {
+        if (StringUtils.isBlank(film.getName())) {
             log.warn("Фильм не внесен, нет названия");
             throw new ValidationException("Название не может быть пустым");
         }
-        if (film.getDescription().length() > 200) {
+        if (film.getDescription() == null || film.getDescription().length() > 200) {
             log.warn("Фильм не внесен, длинное описание");
             throw new ValidationException("Максимальная длина описания - 200 символов");
         }
-        if (film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
+        if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
             log.warn("Фильм не внесен, дата релиза внесена некорректно");
             throw new ValidationException("Дата релиза внесена некорректно");
         }
@@ -88,17 +85,22 @@ public class FilmController extends BaseController {
             log.warn("Фильм не внесен, продолжительность фильма должна быть положительной");
             throw new ValidationException("Продолжительность фильма должна быть положительной");
         }
-
+        if (!checkUniqueness(film)) {
+            log.warn("Фильм не внесен, уже есть в системе");
+            throw new ValidationException("Фильм уже есть в системе");
+        }
     }
 
     private boolean checkUniqueness(Film newFilm) {
         for (Film film : films.values()) {
-            if (film.getName().equals(newFilm.getName()) && film.getReleaseDate().equals(newFilm.getReleaseDate())) {
+            if (!Objects.equals(film.getId(), newFilm.getId()) &&
+                    Objects.equals(film.getName(), newFilm.getName()) &&
+                    Objects.equals(film.getReleaseDate(), newFilm.getReleaseDate())) {
+
                 return false;
             }
         }
 
         return true;
     }
-
 }
