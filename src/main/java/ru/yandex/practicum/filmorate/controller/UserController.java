@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import ru.yandex.practicum.filmorate.exception.DuplicationException;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -112,7 +113,7 @@ public class UserController {
         }
         if (!checkUniqueness(user)) {
             log.warn("Пользователь не внесен, уже есть в системе");
-            throw new ValidationException("Пользователь уже есть в системе, проверьте login и e-mail");
+            throw new DuplicationException("Пользователь уже есть в системе, проверьте login и e-mail");
         }
     }
 
@@ -128,5 +129,4 @@ public class UserController {
 
         return true;
     }
-
 }

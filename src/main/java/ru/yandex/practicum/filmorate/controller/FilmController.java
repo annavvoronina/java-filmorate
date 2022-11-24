@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import ru.yandex.practicum.filmorate.exception.DuplicationException;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -109,7 +110,7 @@ public class FilmController {
         }
         if (!checkUniqueness(film)) {
             log.warn("Фильм не внесен, уже есть в системе");
-            throw new ValidationException("Фильм с таким названием уже есть в системе под другим id");
+            throw new DuplicationException("Фильм с таким названием уже есть в системе под другим id");
         }
     }
 

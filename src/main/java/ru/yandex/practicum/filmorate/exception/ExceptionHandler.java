@@ -22,4 +22,11 @@ public class ExceptionHandler {
                 .body(new ErrorResponse(exception.getMessage()));
     }
 
+    @org.springframework.web.bind.annotation.ExceptionHandler(DuplicationException.class)
+    protected ResponseEntity<ErrorResponse> handleDuplicationException(DuplicationException exception) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(exception.getMessage()));
+    }
+
 }
