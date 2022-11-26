@@ -11,7 +11,6 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,7 +32,7 @@ public class UserService {
         return userStorage.getUsers().values();
     }
 
-    public void create(@Valid User user) {
+    public void create(User user) {
         validate(user);
         log.info("Валидация пройдена");
 
@@ -41,7 +40,7 @@ public class UserService {
         log.info("Пользователь " + user.getLogin() + " добавлен");
     }
 
-    public void put(@Valid User user) {
+    public void put(User user) {
         validate(user);
         log.info("Валидация пройдена");
 

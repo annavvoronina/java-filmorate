@@ -11,7 +11,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -34,7 +33,7 @@ public class FilmService {
         return filmStorage.getFilms().values();
     }
 
-    public void create(@Valid Film film) {
+    public void create(Film film) {
         validate(film);
         log.info("Валидация пройдена");
 
@@ -42,7 +41,7 @@ public class FilmService {
         log.info("Фильм " + film.getName() + " добавлен");
     }
 
-    public void update(@Valid Film film) {
+    public void update(Film film) {
         validate(film);
         log.info("Валидация пройдена");
 
