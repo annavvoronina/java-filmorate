@@ -3,9 +3,15 @@ package ru.yandex.practicum.filmorate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.yandex.practicum.filmorate.controller.UserController;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -18,6 +24,22 @@ class UserControllerTests {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @TestConfiguration
+    static class TestConfig {
+        @Bean
+        public UserStorage userStorage() {
+            return new InMemoryUserStorage();
+        }
+
+        @Bean
+        public UserService userService() {
+            return new UserService(userStorage());
+        }
+    }
 
     @Test
     public void testCreateUser() throws Exception {
@@ -52,7 +74,7 @@ class UserControllerTests {
                                         "\"birthday\": \"2446-08-20\"" +
                                         "}")
                 )
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -68,7 +90,7 @@ class UserControllerTests {
                                         "\"birthday\": \"2446-08-20\"" +
                                         "}")
                 )
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -103,7 +125,7 @@ class UserControllerTests {
                                         "\"birthday\": \"2446-08-20\"" +
                                         "}")
                 )
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
 }
