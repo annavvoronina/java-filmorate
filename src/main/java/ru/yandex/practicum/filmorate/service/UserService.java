@@ -4,15 +4,16 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.DuplicationException;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.FriendshipStatus;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -24,7 +25,7 @@ public class UserService {
     private final UserStorage userStorage;
 
     @Autowired
-    public UserService(UserStorage userStorage) {
+    public UserService(@Qualifier("userDBStorage") UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
@@ -32,15 +33,17 @@ public class UserService {
         return userStorage.getUsers().values();
     }
 
-    public void create(User user) {
+    public User create(User user) {
         validate(user);
         log.info("Валидация пройдена");
 
         userStorage.create(user);
         log.info("Пользователь " + user.getLogin() + " добавлен");
+
+        return userStorage.getUserById(user.getId());
     }
 
-    public void put(User user) {
+    public User put(User user) {
         validate(user);
         log.info("Валидация пройдена");
 
@@ -53,6 +56,8 @@ public class UserService {
             log.warn("Пользователь не найден");
             throw new ObjectNotFoundException("Нет такого пользователя");
         }
+
+        return userStorage.getUserById(user.getId());
     }
 
     public User getUserById(int id) {
@@ -70,11 +75,13 @@ public class UserService {
             throw new ObjectNotFoundException("Как минимум один из пользователей не найден");
         } else {
             User user = userStorage.getUserById(id);
-            user.addFriend(friendId);
-            User friend = userStorage.getUserById(friendId);
-            friend.addFriend(id);
+            List<User> friendList = getFriendsList(friendId);
+            FriendshipStatus status = friendList.contains(user)
+                    ? FriendshipStatus.CONFIRMED : FriendshipStatus.UNCONFIRMED;
 
-            return user;
+            userStorage.addNewFriend(id, friendId, status);
+
+            return userStorage.getUserById(id);
         }
     }
 
@@ -85,12 +92,9 @@ public class UserService {
             log.warn("Пользователь не найден");
             throw new ObjectNotFoundException("Как минимум один из пользователей не найден");
         } else {
-            User user = userStorage.getUserById(id);
-            user.removeFriend(friendId);
-            User friend = userStorage.getUserById(friendId);
-            friend.removeFriend(id);
+            userStorage.removeFriend(id, friendId);
 
-            return user;
+            return userStorage.getUserById(id);
         }
     }
 
@@ -99,12 +103,7 @@ public class UserService {
             log.warn("Пользователь не найден");
             throw new ObjectNotFoundException("Пользователь не найден");
         } else {
-            User user = userStorage.getUserById(id);
-            List<User> userFriends = new ArrayList<>();
-            for (int friendId : user.getFriends()) {
-                userFriends.add(userStorage.getUserById(friendId));
-            }
-            return userFriends;
+            return userStorage.getFriendsList(id);
         }
     }
 
@@ -113,15 +112,7 @@ public class UserService {
             log.warn("Пользователь не найден");
             throw new ObjectNotFoundException("Как минимум один из пользователей не найден");
         } else {
-            List<User> commonFriendsList = new ArrayList<>();
-            for (int firstUserFriendId : userStorage.getUserById(firstUserId).getFriends()) {
-                for (int secondUserFriendId : userStorage.getUserById(secondUserId).getFriends()) {
-                    if (Objects.equals(firstUserFriendId, secondUserFriendId)) {
-                        commonFriendsList.add(userStorage.getUserById(firstUserFriendId));
-                    }
-                }
-            }
-            return commonFriendsList;
+            return userStorage.getCommonFriendsList(firstUserId, secondUserId);
         }
     }
 
