@@ -108,7 +108,7 @@ public class FilmStorageTests {
         newUser.setBirthday(LocalDate.parse("1946-08-20"));
         userStorage.create(newUser);
 
-        List<Film> popularFilmList = filmStorage.getPopularFilmList(10);
+        List<Film> popularFilmList = filmStorage.getPopularFilmList(2);
         assertEquals(popularFilmList.size(), 2);
 
         filmStorage.addLikeFilm(1, 1);

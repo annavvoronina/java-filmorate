@@ -65,7 +65,7 @@ public class UserStorageTests {
         userStorage.create(newUser2);
 
         Map<Integer, User> users = userStorage.getUsers();
-        assertEquals(users.size(), 2);
+        assertEquals(users.size(), 5);
     }
 
     @Test
