@@ -11,8 +11,4 @@ public interface GenreStorage {
     Genre getGenreById(int id);
 
     List<Genre> getGenresByFilmId(int filmId);
-
-    void createGenres(int filmId, List<Genre> genres);
-
-    void deleteGenres(int filmId);
 }

@@ -23,7 +23,7 @@ public class Film {
 
     private Set<Integer> listLikes = new HashSet<>();
 
-    private MPA mpa;
+    private Mpa mpa;
 
     private List<Genre> genres = new ArrayList<>();
 

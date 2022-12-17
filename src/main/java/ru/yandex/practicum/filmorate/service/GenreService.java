@@ -21,7 +21,12 @@ public class GenreService {
     }
 
     public Genre getGenreById(int id) throws ObjectNotFoundException {
-        return genreStorage.getGenreById(id);
+        if (genreStorage.getGenreById(id) == null) {
+            log.warn("Жанр не найден");
+            throw new ObjectNotFoundException("Жанр не найден");
+        } else {
+            return genreStorage.getGenreById(id);
+        }
     }
 
     public List<Genre> getGenres() {

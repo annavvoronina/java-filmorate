@@ -7,7 +7,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @AllArgsConstructor
 @SuperBuilder
-public class MPA {
+public class Mpa {
     private int id;
     private String name;
 }

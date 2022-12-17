@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate;
 
 import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -13,7 +14,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
@@ -26,7 +26,7 @@ public class GenreStorageTests {
     @Test
     public void getGenresTest() {
         List<Genre> genre = genreStorage.getGenres();
-        assertEquals(genre.size(), 6);
+        assertEquals(6, genre.size());
     }
 
     @Test
@@ -41,7 +41,9 @@ public class GenreStorageTests {
 
     @Test
     public void getGenreByIdTestFalse() {
-        assertThrows(ObjectNotFoundException.class, () -> genreStorage.getGenreById(8));
+        ObjectNotFoundException thrown = Assertions.assertThrows(ObjectNotFoundException.class, () ->
+                genreStorage.getGenreById(8));
+        Assertions.assertEquals("Жанр не найден", thrown.getMessage());
     }
 
 }

@@ -1,14 +1,18 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.MPA.MPAStorage;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
 import java.sql.Date;
@@ -26,10 +30,10 @@ public class FilmDBStorage implements FilmStorage {
 
     private final JdbcTemplate jdbcTemplate;
     private final GenreStorage genreStorage;
-    private final MPAStorage mpaStorage;
+    private final MpaStorage mpaStorage;
 
     @Autowired
-    public FilmDBStorage(JdbcTemplate jdbcTemplate, GenreStorage genreStorage, MPAStorage mpaStorage) {
+    public FilmDBStorage(JdbcTemplate jdbcTemplate, GenreStorage genreStorage, MpaStorage mpaStorage) {
         this.jdbcTemplate = jdbcTemplate;
         this.genreStorage = genreStorage;
         this.mpaStorage = mpaStorage;
@@ -37,8 +41,7 @@ public class FilmDBStorage implements FilmStorage {
 
     @Override
     public Map<Integer, Film> getFilms() {
-        String sqlQuery = "SELECT FILM_ID, FILM_NAME, RELEASE_DATE, DESCRIPTION, DURATION, MPA_ID " +
-                "FROM FILM";
+        String sqlQuery = "SELECT FILM_ID, FILM_NAME, RELEASE_DATE, DESCRIPTION, DURATION, MPA_ID FROM FILM";
 
         List<Film> filmList = jdbcTemplate.query(sqlQuery, (resultSet, rowNum) -> buildFilmEntity(resultSet));
 
@@ -60,17 +63,16 @@ public class FilmDBStorage implements FilmStorage {
 
             return preparedStatement;
         }, keyHolder);
-        film.setId(Objects.requireNonNull(keyHolder.getKey()).intValue());
-        if (film.getGenres() != null) {
-            genreStorage.createGenres(film.getId(), film.getGenres());
+        film.setId(Objects.requireNonNull(keyHolder.getKey(), "Ключ не может быть пустым").intValue());
+        if (CollectionUtils.isNotEmpty(film.getGenres())) {
+            addFilmGenres(film.getId(), film.getGenres());
         }
     }
 
     @Override
     public void update(Film film) {
-        String sqlQuery = "UPDATE FILM " +
-                "SET FILM_NAME = ?, DESCRIPTION = ?, RELEASE_DATE = ?, DURATION = ?, MPA_ID = ? " +
-                "WHERE FILM_ID = ?";
+        String sqlQuery = "UPDATE FILM SET FILM_NAME = ?, DESCRIPTION = ?, RELEASE_DATE = ?, DURATION = ?, " +
+                "MPA_ID = ? WHERE FILM_ID = ?";
         jdbcTemplate.update(sqlQuery
                 , film.getName()
                 , film.getDescription()
@@ -78,16 +80,15 @@ public class FilmDBStorage implements FilmStorage {
                 , film.getDuration()
                 , film.getMpa().getId()
                 , film.getId());
-        genreStorage.deleteGenres(film.getId());
-        if (film.getGenres() != null) {
-            genreStorage.createGenres(film.getId(), film.getGenres());
+        deleteFilmGenres(film.getId());
+        if (CollectionUtils.isNotEmpty(film.getGenres())) {
+            addFilmGenres(film.getId(), film.getGenres());
         }
     }
 
     @Override
     public Film getFilmById(int id) {
-        String sqlQuery = "SELECT FILM_ID, FILM_NAME, RELEASE_DATE, DESCRIPTION, DURATION, MPA_ID " +
-                "FROM FILM " +
+        String sqlQuery = "SELECT FILM_ID, FILM_NAME, RELEASE_DATE, DESCRIPTION, DURATION, MPA_ID FROM FILM " +
                 "WHERE FILM_ID = ?";
         return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> buildFilmEntity(rs), id)
                 .stream()
@@ -100,10 +101,11 @@ public class FilmDBStorage implements FilmStorage {
         String sqlQuery = "INSERT INTO LIKES (FILM_ID, USER_ID) VALUES (?,?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
-            PreparedStatement stmt = connection.prepareStatement(sqlQuery, new String[]{"LIKE_ID"});
-            stmt.setInt(1, filmId);
-            stmt.setInt(2, userId);
-            return stmt;
+            PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery, new String[]{"LIKE_ID"});
+            preparedStatement.setInt(1, filmId);
+            preparedStatement.setInt(2, userId);
+
+            return preparedStatement;
         }, keyHolder);
     }
 
@@ -117,14 +119,32 @@ public class FilmDBStorage implements FilmStorage {
 
     @Override
     public List<Film> getPopularFilmList(int count) {
-        String sqlQuery = "SELECT film.FILM_ID, film.FILM_NAME, film.DESCRIPTION, film.RELEASE_DATE, film.DURATION, " +
-                "film.MPA_ID, COUNT(likes.USER_ID) " +
-                "FROM FILM AS film " +
-                "LEFT JOIN LIKES AS likes ON film.FILM_ID = likes.FILM_ID " +
-                "GROUP BY film.FILM_ID, likes.USER_ID " +
-                "ORDER BY likes.USER_ID DESC  " +
-                "LIMIT " + count;
+        String sqlQuery = "SELECT F.FILM_ID, F.FILM_NAME, F.DESCRIPTION, F.RELEASE_DATE, F.DURATION, F.MPA_ID, " +
+                "COUNT(L.USER_ID) FROM FILM AS F LEFT JOIN LIKES AS L ON F.FILM_ID = L.FILM_ID " +
+                "GROUP BY F.FILM_ID, L.USER_ID ORDER BY L.USER_ID DESC LIMIT " + count;
         return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> buildFilmEntity(rs));
+    }
+
+    private void addFilmGenres(int filmId, List<Genre> genres) {
+        List<Genre> genresUniq = genres.stream().distinct().collect(Collectors.toList());
+        jdbcTemplate.batchUpdate(
+                "INSERT INTO FILM_GENRE (FILM_ID, GENRE_ID) VALUES (?,?)",
+                new BatchPreparedStatementSetter() {
+                    public void setValues(@NotNull PreparedStatement statement, int i) throws SQLException {
+                        statement.setLong(1, filmId);
+                        statement.setLong(2, genresUniq.get(i).getId());
+                    }
+
+                    public int getBatchSize() {
+                        return genresUniq.size();
+                    }
+                }
+        );
+    }
+
+    private void deleteFilmGenres(int filmId) {
+        String sqlQuery = "DELETE FROM FILM_GENRE WHERE FILM_ID = ?";
+        jdbcTemplate.update(sqlQuery, filmId);
     }
 
     private Film buildFilmEntity(ResultSet resultSet) throws SQLException {
@@ -135,7 +155,7 @@ public class FilmDBStorage implements FilmStorage {
         film.setDescription(resultSet.getString("DESCRIPTION"));
         film.setReleaseDate(resultSet.getDate("RELEASE_DATE").toLocalDate());
         film.setDuration(resultSet.getInt("DURATION"));
-        film.setMpa(mpaStorage.getMPAById(resultSet.getInt("MPA_ID")));
+        film.setMpa(mpaStorage.getMpaById(resultSet.getInt("MPA_ID")));
         film.setGenres(genreStorage.getGenresByFilmId(id));
 
         return film;
