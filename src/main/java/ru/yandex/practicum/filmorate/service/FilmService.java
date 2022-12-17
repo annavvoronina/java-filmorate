@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.DuplicationException;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
@@ -19,12 +20,12 @@ import java.util.*;
 public class FilmService {
 
     private final FilmStorage filmStorage;
-    private final UserStorage userStorage;
-    private final Comparator<Film> filmComparator = new FilmComparator();
 
+    private final UserStorage userStorage;
 
     @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
+    public FilmService(@Qualifier("filmDBStorage") FilmStorage filmStorage,
+                       @Qualifier("userDBStorage") UserStorage userStorage) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
     }
@@ -33,15 +34,16 @@ public class FilmService {
         return filmStorage.getFilms().values();
     }
 
-    public void create(Film film) {
+    public Film create(Film film) {
         validate(film);
         log.info("Валидация пройдена");
 
         filmStorage.create(film);
         log.info("Фильм " + film.getName() + " добавлен");
+        return getFilmById(film.getId());
     }
 
-    public void update(Film film) {
+    public Film update(Film film) {
         validate(film);
         log.info("Валидация пройдена");
 
@@ -54,6 +56,7 @@ public class FilmService {
             log.warn("Фильм не найден");
             throw new ObjectNotFoundException("В системе нет такого фильма");
         }
+        return getFilmById(film.getId());
     }
 
     public Film getFilmById(int id) {
@@ -70,10 +73,8 @@ public class FilmService {
             log.warn("Фильм или пользователь не найден");
             throw new ObjectNotFoundException("Фильм или пользователь не найден");
         } else {
-            Film film = filmStorage.getFilmById(id);
-            film.addLike(userId);
-
-            return film;
+            filmStorage.addLikeFilm(id, userId);
+            return getFilmById(id);
         }
     }
 
@@ -82,23 +83,13 @@ public class FilmService {
             log.warn("Фильм или пользователь не найден");
             throw new ObjectNotFoundException("Фильм или пользователь не найден");
         } else {
-            Film film = filmStorage.getFilmById(id);
-            film.removeLike(userId);
-
-            return film;
+            filmStorage.deleteLikeFilm(id, userId);
+            return getFilmById(id);
         }
     }
 
     public List<Film> getPopularFilmList(int count) {
-        Set<Film> sortFilmList = new TreeSet<>(filmComparator);
-        sortFilmList.addAll(filmStorage.getFilms().values());
-        List<Film> popularFilmList = new ArrayList<>();
-        for (Film film : sortFilmList) {
-            if (popularFilmList.size() < count) {
-                popularFilmList.add(film);
-            }
-        }
-        return popularFilmList;
+        return filmStorage.getPopularFilmList(count);
     }
 
     private void validate(Film film) {

@@ -29,14 +29,12 @@ public class UserController {
 
     @PostMapping
     public User create(@RequestBody User user) {
-        userService.create(user);
-        return user;
+        return userService.create(user);
     }
 
     @PutMapping
     public User put(@RequestBody User user) {
-        userService.put(user);
-        return user;
+        return userService.put(user);
     }
 
     @GetMapping(value = "/{id}")

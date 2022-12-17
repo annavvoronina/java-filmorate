@@ -1,14 +1,19 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmComparator;
 
 import java.util.*;
 
 @Component
+@Qualifier("inMemoryFilmStorage")
 public class InMemoryFilmStorage implements FilmStorage {
 
     private final Map<Integer, Film> films = new HashMap<>();
+
+    private final Comparator<Film> filmComparator = new FilmComparator();
 
     @Override
     public Map<Integer, Film> getFilms() {
@@ -32,6 +37,31 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public Film getFilmById(int id) {
         return films.get(id);
+    }
+
+    @Override
+    public void addLikeFilm(int id, int userId) {
+        Film film = getFilmById(id);
+        film.addLike(userId);
+    }
+
+    @Override
+    public void deleteLikeFilm(int id, int userId) {
+        Film film = getFilmById(id);
+        film.removeLike(userId);
+    }
+
+    @Override
+    public List<Film> getPopularFilmList(int count) {
+        Set<Film> sortFilmList = new TreeSet<>(filmComparator);
+        sortFilmList.addAll(getFilms().values());
+        List<Film> popularFilmList = new ArrayList<>();
+        for (Film film : sortFilmList) {
+            if (popularFilmList.size() < count) {
+                popularFilmList.add(film);
+            }
+        }
+        return popularFilmList;
     }
 
     private Integer getNewFilmId() {

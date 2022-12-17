@@ -30,14 +30,12 @@ public class FilmController {
 
     @PostMapping
     public Film create(@RequestBody Film film) {
-        filmService.create(film);
-        return film;
+        return filmService.create(film);
     }
 
     @PutMapping
     public Film update(@RequestBody Film film) {
-        filmService.update(film);
-        return film;
+        return filmService.update(film);
     }
 
     @GetMapping(value = "/{id}")

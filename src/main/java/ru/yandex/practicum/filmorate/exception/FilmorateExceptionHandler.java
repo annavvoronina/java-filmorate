@@ -26,7 +26,7 @@ public class FilmorateExceptionHandler {
     @ExceptionHandler(DuplicationException.class)
     protected ResponseEntity<ErrorResponse> handleDuplicationException(DuplicationException exception) {
         return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(exception.getMessage()));
     }
 
